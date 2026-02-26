@@ -31,13 +31,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // Enable a simple in-memory message broker for sending messages to clients
         // Prefix for messages FROM server TO client
         registry.enableSimpleBroker("/topic", "/queue");
-        
+
         // Prefix for messages FROM client TO server
         registry.setApplicationDestinationPrefixes("/app");
-        
+
         // User-specific destination prefix
         registry.setUserDestinationPrefix("/user");
     }
@@ -48,8 +47,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws/battle")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
-        
-        // Native WebSocket endpoint (without SockJS fallback)
+
         registry.addEndpoint("/ws/battle")
                 .setAllowedOriginPatterns("*");
     }
@@ -60,10 +58,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                
+
                 if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String authHeader = accessor.getFirstNativeHeader("Authorization");
-                    
+
                     if (authHeader != null && authHeader.startsWith("Bearer ")) {
                         String token = authHeader.substring(7);
                         try {
@@ -71,22 +69,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                             if (email != null) {
                                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
                                 if (jwtUtil.isTokenValid(token, userDetails)) {
-                                    UsernamePasswordAuthenticationToken authentication = 
-                                            new UsernamePasswordAuthenticationToken(
-                                                    userDetails, null, userDetails.getAuthorities());
+                                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                            userDetails, null, userDetails.getAuthorities());
                                     SecurityContextHolder.getContext().setAuthentication(authentication);
                                     accessor.setUser(authentication);
                                 }
                             }
                         } catch (Exception e) {
                             log.error("WebSocket authentication failed: {}", e.getMessage());
-                            return null; // Reject connection on auth failure
+                            return null;
                         }
                     } else {
-                        // No authorization header - reject the connection
                         log.warn("WebSocket connection rejected: no authorization header");
                         return null;
-                    }
                     }
                 }
                 return message;

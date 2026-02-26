@@ -1,6 +1,9 @@
 package com.gourav.CodyWar.Configuration;
 
 import com.gourav.CodyWar.Domain.Dto.ApiResponse;
+import com.gourav.CodyWar.Exception.BattleNotActiveException;
+import com.gourav.CodyWar.Exception.ResourceNotFoundException;
+import com.gourav.CodyWar.Exception.SubmissionProcessingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -47,10 +50,27 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(BattleNotActiveException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBattleNotActiveException(BattleNotActiveException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(SubmissionProcessingException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSubmissionProcessingException(SubmissionProcessingException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("An unexpected error occurred: " + ex.getMessage()));
     }
 }
-
